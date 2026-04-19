@@ -1,10 +1,34 @@
-import { setCookie, getCookie } from './cookie';
+import { deleteCookie, getCookie, setCookie } from './cookie';
 import { TIngredient, TOrder, TOrdersData, TUser } from './types';
 
 const URL = process.env.BURGER_API_URL;
+export const AUTH_LOGOUT_EVENT = 'auth:logout';
 
-const checkResponse = <T>(res: Response): Promise<T> =>
-  res.ok ? res.json() : res.json().then((err) => Promise.reject(err));
+export type TApiError = {
+  message: string;
+  statusCode: number;
+  [key: string]: unknown;
+};
+
+const checkResponse = async <T>(res: Response): Promise<T> => {
+  if (res.ok) {
+    return res.json();
+  }
+
+  let errorPayload: Record<string, unknown> = {};
+  try {
+    errorPayload = await res.json();
+  } catch {
+    errorPayload = {};
+  }
+
+  return Promise.reject({
+    ...errorPayload,
+    statusCode: res.status,
+    message:
+      (errorPayload.message as string | undefined) || `Ошибка ${res.status}`
+  } satisfies TApiError);
+};
 
 type TServerResponse<T> = {
   success: boolean;
@@ -16,6 +40,12 @@ type TRefreshResponse = TServerResponse<{
 }>;
 
 let refreshPromise: Promise<TRefreshResponse> | null = null;
+
+const emitAuthLogout = () => {
+  if (typeof window !== 'undefined') {
+    window.dispatchEvent(new Event(AUTH_LOGOUT_EVENT));
+  }
+};
 
 export const refreshToken = (): Promise<TRefreshResponse> =>
   fetch(`${URL}/auth/token`, {
@@ -47,6 +77,47 @@ const getRefreshTokenWithLock = () => {
   return refreshPromise;
 };
 
+const isAuthError = (error: unknown) => {
+  const authError = error as Partial<TApiError>;
+
+  return (
+    authError.statusCode === 401 ||
+    authError.statusCode === 403 ||
+    authError.message === 'jwt expired'
+  );
+};
+
+const updateAuthorizationHeader = (
+  headers: HeadersInit | undefined,
+  accessToken: string
+) => {
+  if (headers instanceof Headers) {
+    headers.set('authorization', accessToken);
+    return headers;
+  }
+
+  if (Array.isArray(headers)) {
+    const hasAuthorizationHeader = headers.some(
+      ([key]) => key.toLowerCase() === 'authorization'
+    );
+
+    const mappedHeaders = headers.map(([key, value]): [string, string] =>
+      key.toLowerCase() === 'authorization' ? [key, accessToken] : [key, value]
+    );
+
+    if (!hasAuthorizationHeader) {
+      mappedHeaders.push(['authorization', accessToken]);
+    }
+
+    return mappedHeaders;
+  }
+
+  return {
+    ...(headers || {}),
+    authorization: accessToken
+  } as HeadersInit;
+};
+
 export const fetchWithRefresh = async <T>(
   url: RequestInfo,
   options: RequestInit
@@ -55,17 +126,28 @@ export const fetchWithRefresh = async <T>(
     const res = await fetch(url, options);
     return await checkResponse<T>(res);
   } catch (err) {
-    if ((err as { message: string }).message === 'jwt expired') {
-      const refreshData = await getRefreshTokenWithLock();
-      if (options.headers) {
-        (options.headers as { [key: string]: string }).authorization =
-          refreshData.accessToken;
+    if (isAuthError(err)) {
+      try {
+        const refreshData = await getRefreshTokenWithLock();
+        const updatedOptions = {
+          ...options,
+          headers: updateAuthorizationHeader(
+            options.headers,
+            refreshData.accessToken
+          )
+        };
+
+        const res = await fetch(url, updatedOptions);
+        return await checkResponse<T>(res);
+      } catch (refreshError) {
+        localStorage.removeItem('refreshToken');
+        deleteCookie('accessToken');
+        emitAuthLogout();
+        return Promise.reject(refreshError);
       }
-      const res = await fetch(url, options);
-      return await checkResponse<T>(res);
-    } else {
-      return Promise.reject(err);
     }
+
+    return Promise.reject(err);
   }
 };
 

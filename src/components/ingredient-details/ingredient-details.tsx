@@ -10,13 +10,13 @@ import {
 import { useEffect } from 'react';
 
 export const IngredientDetails: FC = () => {
-  const { number } = useParams();
+  const { id } = useParams();
 
   const dispatch = useDispatch();
 
   const isLoading = useSelector(getIngredientsStatus);
   const ingredientData = useSelector((state) =>
-    getIngredientById(state, number || '')
+    getIngredientById(state, id || '')
   );
 
   useEffect(() => {

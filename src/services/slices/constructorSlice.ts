@@ -6,6 +6,7 @@ import {
 } from '@reduxjs/toolkit';
 import { TConstructorIngredient, TIngredient } from '@utils-types';
 import { getIngredientsApi } from '@api';
+import { forceLogout, logoutUser } from './userSlice';
 
 export const ingredientsInit = createAsyncThunk('ingredients', () =>
   getIngredientsApi()
@@ -14,6 +15,7 @@ export const ingredientsInit = createAsyncThunk('ingredients', () =>
 interface ConstructorSliceState {
   isLoading: boolean;
   error: string | null;
+  ingredients: TIngredient[];
   buns: TIngredient[];
   mains: TIngredient[];
   sauces: TIngredient[];
@@ -27,6 +29,7 @@ interface ConstructorSliceState {
 const initialState: ConstructorSliceState = {
   isLoading: true,
   error: null,
+  ingredients: [],
   buns: [],
   mains: [],
   sauces: [],
@@ -46,12 +49,12 @@ export const constructorSlice = createSlice({
         const currentBunPrice = state.constructorItems.bun?.price || 0;
 
         state.constructorItems.price =
-          state.constructorItems.price - currentBunPrice;
+          state.constructorItems.price - currentBunPrice * 2;
 
         state.constructorItems.bun = action.payload;
 
         state.constructorItems.price =
-          state.constructorItems.price + action.payload.price;
+          state.constructorItems.price + action.payload.price * 2;
       } else {
         state.constructorItems.ingredients.push({
           ...action.payload,
@@ -67,7 +70,7 @@ export const constructorSlice = createSlice({
 
         state.constructorItems.bun = null;
         state.constructorItems.price =
-          state.constructorItems.price - currentBunPrice;
+          state.constructorItems.price - currentBunPrice * 2;
       } else {
         state.constructorItems.ingredients =
           state.constructorItems.ingredients.filter(
@@ -108,37 +111,64 @@ export const constructorSlice = createSlice({
   },
   selectors: {
     getConstructorState: (state) => state,
-    getIngredients: (state) => [...state.buns, ...state.mains, ...state.sauces],
+    getIngredients: (state) => state.ingredients,
     getIngredientsStatus: (state) => state.isLoading,
     getConstructorItems: (state) => state.constructorItems,
     getIngredientById: (state, id: string) =>
-      [...state.buns, ...state.mains, ...state.sauces].find(
-        (item) => item._id === id
-      )
+      state.ingredients.find((item) => item._id === id)
   },
   extraReducers: (builder) => {
     builder
       .addCase(ingredientsInit.pending, (state) => {
         state.isLoading = true;
         state.error = null;
+        state.ingredients = [];
         state.buns = [];
         state.mains = [];
         state.sauces = [];
       })
       .addCase(ingredientsInit.fulfilled, (state, action) => {
         state.isLoading = false;
-        state.buns = action.payload.filter(
+        state.ingredients = action.payload;
+        state.buns = state.ingredients.filter(
           (ingredient) => ingredient.type === 'bun'
         );
-        state.mains = action.payload.filter(
+        state.mains = state.ingredients.filter(
           (ingredient) => ingredient.type === 'main'
         );
-        state.sauces = action.payload.filter(
+        state.sauces = state.ingredients.filter(
           (ingredient) => ingredient.type === 'sauce'
         );
       })
       .addCase(ingredientsInit.rejected, (state) => {
         state.isLoading = false;
+      })
+      .addCase(logoutUser.fulfilled, (state) => {
+        state.error = null;
+        state.isLoading = false;
+        state.constructorItems = {
+          price: 0,
+          bun: null,
+          ingredients: []
+        };
+      })
+      .addCase(logoutUser.rejected, (state) => {
+        state.error = null;
+        state.isLoading = false;
+        state.constructorItems = {
+          price: 0,
+          bun: null,
+          ingredients: []
+        };
+      })
+      .addCase(forceLogout, (state) => {
+        state.error = null;
+        state.isLoading = false;
+        state.constructorItems = {
+          price: 0,
+          bun: null,
+          ingredients: []
+        };
       });
   }
 });

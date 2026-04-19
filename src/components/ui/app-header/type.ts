@@ -1,2 +1,1 @@
-export type TAppHeaderUIProps = {
-};
+export type TAppHeaderUIProps = {};

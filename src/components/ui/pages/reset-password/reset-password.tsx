@@ -10,10 +10,15 @@ import { ResetPasswordUIProps } from './type';
 
 export const ResetPasswordUI: FC<ResetPasswordUIProps> = ({
   errorText,
+  isFormValid = false,
+  isSubmitting,
   password,
+  passwordError,
   setPassword,
   handleSubmit,
+  submitLabel,
   token,
+  tokenError,
   setToken
 }) => (
   <main className={styles.container}>
@@ -30,6 +35,11 @@ export const ResetPasswordUI: FC<ResetPasswordUIProps> = ({
             value={password}
             name='password'
           />
+          {passwordError && (
+            <p className='mt-2 text text_type_main-default text_color_error'>
+              {passwordError}
+            </p>
+          )}
         </div>
         <div className='pb-6'>
           <Input
@@ -38,14 +48,19 @@ export const ResetPasswordUI: FC<ResetPasswordUIProps> = ({
             onChange={(e) => setToken(e.target.value)}
             value={token}
             name='token'
-            error={false}
-            errorText=''
+            error={Boolean(tokenError)}
+            errorText={tokenError || ''}
             size='default'
           />
         </div>
         <div className={`pb-6 ${styles.button}`}>
-          <Button type='primary' size='medium' htmlType='submit'>
-            Сохранить
+          <Button
+            type='primary'
+            size='medium'
+            htmlType='submit'
+            disabled={isSubmitting || !isFormValid}
+          >
+            {submitLabel}
           </Button>
         </div>
         {errorText && (

@@ -6,4 +6,6 @@ export type ResetPasswordUIProps = Omit<PageUIProps, 'email' | 'setEmail'> & {
   token: string;
   setPassword: Dispatch<SetStateAction<string>>;
   setToken: Dispatch<SetStateAction<string>>;
+  passwordError?: string;
+  tokenError?: string;
 };

@@ -52,6 +52,7 @@ export const OrderCard: FC<OrderCardProps> = memo(({ order }) => {
       orderInfo={orderInfo}
       maxIngredients={maxIngredients}
       locationState={{ background: location }}
+      isProfileOrders={location.pathname === '/profile/orders'}
     />
   );
 });

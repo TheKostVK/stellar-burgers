@@ -16,7 +16,7 @@ export const ConstructorPage: FC = () => {
 
   useEffect(() => {
     dispatch(ingredientsInit());
-  }, []);
+  }, [dispatch]);
 
   return (
     <main className={styles.containerMain}>

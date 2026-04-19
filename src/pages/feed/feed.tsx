@@ -3,9 +3,9 @@ import { FeedUI } from '@ui-pages';
 import { FC, useEffect } from 'react';
 import { useDispatch, useSelector } from '../../services/store';
 import {
-  getOrders,
-  getOrdersStatus,
-  ordersInit
+  fetchFeedOrders,
+  getFeedOrders,
+  getFeedStatus
 } from '../../services/slices/ordersSlice';
 import {
   getIngredientsStatus,
@@ -13,19 +13,29 @@ import {
 } from '../../services/slices/constructorSlice';
 
 export const Feed: FC = () => {
-  const isLoading = useSelector(getOrdersStatus);
+  const isLoading = useSelector(getFeedStatus);
   const isIngredientsLoading = useSelector(getIngredientsStatus);
-  const orders = useSelector(getOrders);
+  const orders = useSelector(getFeedOrders);
 
   const dispatch = useDispatch();
 
   useEffect(() => {
-    dispatch(ordersInit());
+    let request = dispatch(fetchFeedOrders());
     dispatch(ingredientsInit());
+
+    const intervalId = setInterval(() => {
+      request.abort();
+      request = dispatch(fetchFeedOrders());
+    }, 30000);
+
+    return () => {
+      clearInterval(intervalId);
+      request.abort();
+    };
   }, [dispatch]);
 
   const handleFeedsUpdate = () => {
-    dispatch(ordersInit());
+    dispatch(fetchFeedOrders());
   };
 
   if (isLoading || isIngredientsLoading) {

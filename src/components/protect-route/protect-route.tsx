@@ -1,30 +1,38 @@
 import { ReactNode } from 'react';
 import { useSelector } from '../../services/store';
-import {
-  getAuthStatus,
-  getIsAuthInit,
-  getUser
-} from '../../services/slices/userSlice';
-import { Navigate, useLocation } from 'react-router-dom';
+import { getIsAuthInit, getUser } from '../../services/slices/userSlice';
+import { Location, Navigate, useLocation } from 'react-router-dom';
 import { AppRoute } from '@constants/routes';
 import { Preloader } from '@ui';
 
 interface ProtectRouteProps {
+  onlyUnAuth?: boolean;
   children?: ReactNode;
 }
 
-const PrivateRoute = ({ children }: ProtectRouteProps) => {
+type TRouteLocationState = {
+  from?: Location;
+};
+
+const PrivateRoute = ({ children, onlyUnAuth = false }: ProtectRouteProps) => {
   const user = useSelector(getUser);
-  const isLoading = useSelector(getAuthStatus);
   const isInit = useSelector(getIsAuthInit);
   const location = useLocation();
+  const from = (location.state as TRouteLocationState | null)?.from;
+  const fromPath = from
+    ? `${from.pathname}${from.search}${from.hash}`
+    : AppRoute.HOME;
 
-  if (!isInit || isLoading) {
+  if (!isInit) {
     return <Preloader />;
   }
 
-  if (!user) {
-    return <Navigate to={AppRoute.LOGIN} state={{ from: location }} />;
+  if (!onlyUnAuth && !user) {
+    return <Navigate to={AppRoute.LOGIN} state={{ from: location }} replace />;
+  }
+
+  if (onlyUnAuth && user) {
+    return <Navigate to={fromPath} replace />;
   }
 
   return children;

@@ -8,9 +8,14 @@ export const LoginUI: FC<LoginUIProps> = ({
   email,
   setEmail,
   errorText,
+  emailError,
   handleSubmit,
+  isFormValid = false,
+  isSubmitting,
   password,
-  setPassword
+  passwordError,
+  setPassword,
+  submitLabel
 }) => (
   <main className={styles.container}>
     <div className={`pt-6 ${styles.wrapCenter}`}>
@@ -28,8 +33,8 @@ export const LoginUI: FC<LoginUIProps> = ({
               onChange={(e) => setEmail(e.target.value)}
               value={email}
               name='email'
-              error={false}
-              errorText=''
+              error={Boolean(emailError)}
+              errorText={emailError || ''}
               size='default'
             />
           </div>
@@ -40,14 +45,19 @@ export const LoginUI: FC<LoginUIProps> = ({
               onChange={(e) => setPassword(e.target.value)}
               value={password}
               name='password'
-              error={false}
-              errorText=''
+              error={Boolean(passwordError)}
+              errorText={passwordError || ''}
               size='default'
             />
           </div>
           <div className={`pb-6 ${styles.button}`}>
-            <Button type='primary' size='medium' htmlType='submit'>
-              Войти
+            <Button
+              type='primary'
+              size='medium'
+              htmlType='submit'
+              disabled={isSubmitting || !isFormValid}
+            >
+              {submitLabel}
             </Button>
           </div>
           {errorText && (

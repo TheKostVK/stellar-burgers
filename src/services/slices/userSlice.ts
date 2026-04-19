@@ -7,10 +7,14 @@ import {
   logoutApi,
   refreshToken,
   registerUserApi,
+  updateUserApi,
   TLoginData,
   TRegisterData
 } from '@api';
 import { deleteCookie, getCookie, setCookie } from '../../utils/cookie';
+
+const getErrorMessage = (error: unknown) =>
+  (error as { message?: string })?.message || 'Ошибка запроса';
 
 export const initUser = createAsyncThunk(
   'auth/initUser',
@@ -47,16 +51,52 @@ export const initUser = createAsyncThunk(
   }
 );
 
-export const loginUser = createAsyncThunk('auth/login', (data: TLoginData) =>
-  loginUserApi(data)
+export const loginUser = createAsyncThunk<
+  { user: TUser; accessToken: string; refreshToken: string },
+  TLoginData,
+  { rejectValue: string }
+>('auth/login', async (data, { rejectWithValue }) => {
+  try {
+    return await loginUserApi(data);
+  } catch (error) {
+    return rejectWithValue(getErrorMessage(error));
+  }
+});
+
+export const registerUser = createAsyncThunk<
+  { user: TUser; accessToken: string; refreshToken: string },
+  TRegisterData,
+  { rejectValue: string }
+>('auth/register', async (data, { rejectWithValue }) => {
+  try {
+    return await registerUserApi(data);
+  } catch (error) {
+    return rejectWithValue(getErrorMessage(error));
+  }
+});
+
+export const logoutUser = createAsyncThunk<void, void, { rejectValue: string }>(
+  'auth/logout',
+  async (_, { rejectWithValue }) => {
+    try {
+      await logoutApi();
+    } catch (error) {
+      return rejectWithValue(getErrorMessage(error));
+    }
+  }
 );
 
-export const registerUser = createAsyncThunk(
-  'auth/register',
-  (data: TRegisterData) => registerUserApi(data)
-);
-
-export const logoutUser = createAsyncThunk('auth/logout', () => logoutApi());
+export const updateUser = createAsyncThunk<
+  { user: TUser },
+  Partial<TRegisterData>,
+  { rejectValue: string }
+>('auth/updateUser', async (data, { rejectWithValue }) => {
+  try {
+    return await updateUserApi(data);
+  } catch (error) {
+    return rejectWithValue(getErrorMessage(error));
+  }
+});
 
 const clearAuth = (state: UserState) => {
   localStorage.removeItem('refreshToken');
@@ -90,11 +130,19 @@ const initialState: UserState = {
 export const userSlice = createSlice({
   name: 'userSlice',
   initialState,
-  reducers: {},
+  reducers: {
+    forceLogout: (state) => {
+      state.isInit = true;
+      state.isLoading = false;
+      state.error = null;
+      clearAuth(state);
+    }
+  },
   selectors: {
     getUser: (state) => state.user,
     getAuthStatus: (state) => state.isLoading,
-    getIsAuthInit: (state) => state.isInit
+    getIsAuthInit: (state) => state.isInit,
+    getAuthError: (state) => state.error
   },
   extraReducers: (builder) => {
     builder
@@ -116,43 +164,70 @@ export const userSlice = createSlice({
       })
       .addCase(loginUser.pending, (state) => {
         state.isLoading = true;
+        state.error = null;
       })
       .addCase(loginUser.fulfilled, (state, action) => {
         state.isInit = true;
         state.isLoading = false;
         setAuth(state, action.payload);
       })
-      .addCase(loginUser.rejected, (state) => {
+      .addCase(loginUser.rejected, (state, action) => {
         state.isInit = true;
         state.isLoading = false;
         clearAuth(state);
+        state.error = action.payload || action.error.message || 'Ошибка входа';
       })
       .addCase(registerUser.pending, (state) => {
         state.isLoading = true;
+        state.error = null;
       })
       .addCase(registerUser.fulfilled, (state, action) => {
         state.isInit = true;
         state.isLoading = false;
         setAuth(state, action.payload);
       })
-      .addCase(registerUser.rejected, (state) => {
+      .addCase(registerUser.rejected, (state, action) => {
+        state.isInit = true;
+        state.isLoading = false;
+        clearAuth(state);
+        state.error =
+          (action.payload as string) ||
+          action.error.message ||
+          'Ошибка регистрации';
+      })
+      .addCase(logoutUser.pending, (state) => {
+        state.isInit = true;
+        state.isLoading = true;
+        state.error = null;
+      })
+      .addCase(logoutUser.fulfilled, (state) => {
         state.isInit = true;
         state.isLoading = false;
         clearAuth(state);
       })
-      .addCase(logoutUser.pending, (state) => {
-        state.isInit = true;
-        clearAuth(state);
-      })
-      .addCase(logoutUser.fulfilled, (state) => {
-        state.isInit = true;
-        clearAuth(state);
-      })
       .addCase(logoutUser.rejected, (state) => {
         state.isInit = true;
+        state.isLoading = false;
         clearAuth(state);
+      })
+      .addCase(updateUser.pending, (state) => {
+        state.isLoading = true;
+        state.error = null;
+      })
+      .addCase(updateUser.fulfilled, (state, action) => {
+        state.isLoading = false;
+        state.user = action.payload.user;
+      })
+      .addCase(updateUser.rejected, (state, action) => {
+        state.isLoading = false;
+        state.error =
+          (action.payload as string) ||
+          action.error.message ||
+          'Не удалось обновить профиль';
       });
   }
 });
 
-export const { getUser, getAuthStatus, getIsAuthInit } = userSlice.selectors;
+export const { getUser, getAuthStatus, getIsAuthInit, getAuthError } =
+  userSlice.selectors;
+export const { forceLogout } = userSlice.actions;

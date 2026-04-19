@@ -1,35 +1,47 @@
 import { FC, useEffect, useMemo } from 'react';
 import { Preloader, OrderInfoUI } from '@ui';
 import { TIngredient } from '@utils-types';
-import { useDispatch, useSelector } from '../../services/store';
+import { RootState, useDispatch, useSelector } from '../../services/store';
 import {
-  getOrderById,
-  getOrders,
-  getOrdersStatus,
-  ordersInit
+  fetchFeedOrders,
+  fetchUserOrders,
+  getFeedOrderById,
+  getFeedOrders,
+  getFeedStatus,
+  getUserOrderById,
+  getUserOrders,
+  getUserOrdersStatus
 } from '../../services/slices/ordersSlice';
 import {
-  getIngredientById,
   getIngredients,
   getIngredientsStatus,
   ingredientsInit
 } from '../../services/slices/constructorSlice';
-import { useParams } from 'react-router-dom';
+import { useLocation, useParams } from 'react-router-dom';
+import { AppRoute } from '@constants/routes';
 
 export const OrderInfo: FC = () => {
+  const location = useLocation();
   const { number } = useParams();
   const orderNumber = Number(number);
+  const isProfileOrder = location.pathname.startsWith(AppRoute.PROFILE_ORDERS);
 
   const dispatch = useDispatch();
 
   const isLoadingIngredients = useSelector(getIngredientsStatus);
-  const isLoadingOrders = useSelector(getOrdersStatus);
+  const isLoadingFeedOrders = useSelector(getFeedStatus);
+  const isLoadingUserOrders = useSelector(getUserOrdersStatus);
 
-  const orders = useSelector(getOrders);
+  const feedOrders = useSelector(getFeedOrders);
+  const userOrders = useSelector(getUserOrders);
   const ingredients = useSelector(getIngredients);
 
-  const orderData = useSelector((state) =>
-    Number.isFinite(orderNumber) ? getOrderById(state, orderNumber) : undefined
+  const orderData = useSelector((state: RootState) =>
+    Number.isFinite(orderNumber)
+      ? isProfileOrder
+        ? getUserOrderById(state, orderNumber)
+        : getFeedOrderById(state, orderNumber)
+      : undefined
   );
 
   useEffect(() => {
@@ -37,10 +49,26 @@ export const OrderInfo: FC = () => {
       dispatch(ingredientsInit());
     }
 
-    if (!orders.length && !isLoadingOrders) {
-      dispatch(ordersInit());
+    if (isProfileOrder) {
+      if (!userOrders.length && !isLoadingUserOrders) {
+        dispatch(fetchUserOrders());
+      }
+      return;
     }
-  }, [dispatch, orders, ingredients, isLoadingIngredients, isLoadingOrders]);
+
+    if (!feedOrders.length && !isLoadingFeedOrders) {
+      dispatch(fetchFeedOrders());
+    }
+  }, [
+    dispatch,
+    feedOrders.length,
+    userOrders.length,
+    ingredients.length,
+    isProfileOrder,
+    isLoadingIngredients,
+    isLoadingFeedOrders,
+    isLoadingUserOrders
+  ]);
 
   /* Готовим данные для отображения */
   const orderInfo = useMemo(() => {
@@ -84,7 +112,12 @@ export const OrderInfo: FC = () => {
     };
   }, [orderData, ingredients]);
 
-  if (!orderInfo || isLoadingIngredients || isLoadingOrders) {
+  if (
+    !orderInfo ||
+    isLoadingIngredients ||
+    isLoadingFeedOrders ||
+    isLoadingUserOrders
+  ) {
     return <Preloader />;
   }
 

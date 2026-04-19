@@ -19,7 +19,8 @@ import { IngredientDetails } from '../ingredient-details';
 import { AppRoute, AppRoutePattern, AppRouteSegment } from '@constants/routes';
 import { useEffect } from 'react';
 import { useDispatch } from '../../services/store';
-import { initUser } from '../../services/slices/userSlice';
+import { forceLogout, initUser } from '../../services/slices/userSlice';
+import { AUTH_LOGOUT_EVENT } from '@api';
 
 const App = () => {
   const dispatch = useDispatch();
@@ -27,10 +28,23 @@ const App = () => {
   const navigate = useNavigate();
   const background = location.state?.background;
 
-  const handleCloseModal = () => navigate(-1);
+  const handleCloseModal = () =>
+    background ? navigate(-1) : navigate(AppRoute.HOME, { replace: true });
 
   useEffect(() => {
     dispatch(initUser());
+  }, [dispatch]);
+
+  useEffect(() => {
+    const handleAuthLogout = () => {
+      dispatch(forceLogout());
+    };
+
+    window.addEventListener(AUTH_LOGOUT_EVENT, handleAuthLogout);
+
+    return () => {
+      window.removeEventListener(AUTH_LOGOUT_EVENT, handleAuthLogout);
+    };
   }, [dispatch]);
 
   return (
@@ -39,15 +53,21 @@ const App = () => {
         <Route path={AppRoute.HOME} element={<PageLayout />}>
           <Route index element={<ConstructorPage />} />
           <Route path={AppRouteSegment.FEED} element={<Feed />} />
-          <Route path={AppRouteSegment.LOGIN} element={<Login />} />
-          <Route path={AppRouteSegment.REGISTER} element={<Register />} />
+          <Route
+            path={AppRouteSegment.LOGIN}
+            element={<ProtectRoute onlyUnAuth children={<Login />} />}
+          />
+          <Route
+            path={AppRouteSegment.REGISTER}
+            element={<ProtectRoute onlyUnAuth children={<Register />} />}
+          />
           <Route
             path={AppRouteSegment.FORGOT_PASSWORD}
-            element={<ForgotPassword />}
+            element={<ProtectRoute onlyUnAuth children={<ForgotPassword />} />}
           />
           <Route
             path={AppRouteSegment.RESET_PASSWORD}
-            element={<ResetPassword />}
+            element={<ProtectRoute onlyUnAuth children={<ResetPassword />} />}
           />
           <Route path={AppRouteSegment.PROFILE}>
             <Route index element={<ProtectRoute children={<Profile />} />} />
