@@ -2,6 +2,7 @@ import React, { FC } from 'react';
 import styles from './profile-menu.module.css';
 import { NavLink } from 'react-router-dom';
 import { ProfileMenuUIProps } from './type';
+import { AppRoute } from '@constants/routes';
 
 export const ProfileMenuUI: FC<ProfileMenuUIProps> = ({
   pathname,
@@ -9,7 +10,7 @@ export const ProfileMenuUI: FC<ProfileMenuUIProps> = ({
 }) => (
   <>
     <NavLink
-      to={'/profile'}
+      to={AppRoute.PROFILE}
       className={({ isActive }) =>
         `text text_type_main-medium text_color_inactive pt-4 pb-4 ${
           styles.link
@@ -20,7 +21,7 @@ export const ProfileMenuUI: FC<ProfileMenuUIProps> = ({
       Профиль
     </NavLink>
     <NavLink
-      to={'/profile/orders'}
+      to={AppRoute.PROFILE_ORDERS}
       className={({ isActive }) =>
         `text text_type_main-medium text_color_inactive pt-4 pb-4 ${
           styles.link

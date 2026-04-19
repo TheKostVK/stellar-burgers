@@ -1,33 +1,112 @@
-import { ConstructorPage } from '@pages';
 import '../../index.css';
-import styles from './app.module.css';
-
-import { AppHeader } from '@components';
-import { Preloader } from '@ui';
+import { Route, Routes, useLocation, useNavigate } from 'react-router-dom';
+import {
+  ConstructorPage,
+  Feed,
+  ForgotPassword,
+  Login,
+  NotFound404,
+  Profile,
+  ProfileOrders,
+  Register,
+  ResetPassword
+} from '@pages';
+import PageLayout from '../../pages/page-layout/page-layout';
+import ProtectRoute from '../protect-route/protect-route';
+import { Modal } from '../modal';
+import { OrderInfo } from '../order-info';
+import { IngredientDetails } from '../ingredient-details';
+import { AppRoute, AppRoutePattern, AppRouteSegment } from '@constants/routes';
+import { useEffect } from 'react';
+import { useDispatch } from '../../services/store';
+import { initUser } from '../../services/slices/userSlice';
 
 const App = () => {
-  /** TODO: взять переменные из стора */
-  const isIngredientsLoading = false;
-  const ingredients = [];
-  const error = null;
+  const dispatch = useDispatch();
+  const location = useLocation();
+  const navigate = useNavigate();
+  const background = location.state?.background;
+
+  const handleCloseModal = () => navigate(-1);
+
+  useEffect(() => {
+    dispatch(initUser());
+  }, [dispatch]);
 
   return (
-    <div className={styles.app}>
-      <AppHeader />
-      {isIngredientsLoading ? (
-        <Preloader />
-      ) : error ? (
-        <div className={`${styles.error} text text_type_main-medium pt-4`}>
-          {error}
-        </div>
-      ) : ingredients.length > 0 ? (
-        <ConstructorPage />
-      ) : (
-        <div className={`${styles.title} text text_type_main-medium pt-4`}>
-          Нет игредиентов
-        </div>
+    <>
+      <Routes location={background || location}>
+        <Route path={AppRoute.HOME} element={<PageLayout />}>
+          <Route index element={<ConstructorPage />} />
+          <Route path={AppRouteSegment.FEED} element={<Feed />} />
+          <Route path={AppRouteSegment.LOGIN} element={<Login />} />
+          <Route path={AppRouteSegment.REGISTER} element={<Register />} />
+          <Route
+            path={AppRouteSegment.FORGOT_PASSWORD}
+            element={<ForgotPassword />}
+          />
+          <Route
+            path={AppRouteSegment.RESET_PASSWORD}
+            element={<ResetPassword />}
+          />
+          <Route path={AppRouteSegment.PROFILE}>
+            <Route index element={<ProtectRoute children={<Profile />} />} />
+            <Route
+              path={AppRouteSegment.PROFILE_ORDERS}
+              element={<ProtectRoute children={<ProfileOrders />} />}
+            />
+          </Route>
+          <Route path={AppRoutePattern.FEED_ORDER} element={<OrderInfo />} />
+          <Route
+            path={AppRoutePattern.INGREDIENT_DETAILS}
+            element={<IngredientDetails />}
+          />
+          <Route
+            path={AppRoutePattern.PROFILE_ORDER}
+            element={<ProtectRoute children={<OrderInfo />} />}
+          />
+        </Route>
+        <Route path={AppRoute.NOT_FOUND} element={<NotFound404 />} />
+      </Routes>
+      {background && (
+        <Routes>
+          <Route
+            path={AppRoutePattern.FEED_ORDER}
+            element={
+              <Modal
+                title={''}
+                onClose={handleCloseModal}
+                children={<OrderInfo />}
+              />
+            }
+          />
+          <Route
+            path={AppRoutePattern.INGREDIENT_DETAILS}
+            element={
+              <Modal
+                title={''}
+                onClose={handleCloseModal}
+                children={<IngredientDetails />}
+              />
+            }
+          />
+          <Route
+            path={AppRoutePattern.PROFILE_ORDER}
+            element={
+              <ProtectRoute
+                children={
+                  <Modal
+                    title={''}
+                    onClose={handleCloseModal}
+                    children={<OrderInfo />}
+                  />
+                }
+              />
+            }
+          />
+        </Routes>
       )}
-    </div>
+    </>
   );
 };
 
