@@ -58,11 +58,10 @@ module.exports = {
   ],
   resolve: {
     extensions: [
-      '*',
-      '.js',
-      '.jsx',
       '.ts',
       '.tsx',
+      '.js',
+      '.jsx',
       '.json',
       '.css',
       '.scss',
@@ -78,7 +77,8 @@ module.exports = {
       '@utils-types': path.resolve(__dirname, './src/utils/types'),
       '@api': path.resolve(__dirname, './src/utils/burger-api.ts'),
       '@slices': path.resolve(__dirname, './src/services/slices'),
-      '@selectors': path.resolve(__dirname, './src/services/selectors')
+      '@selectors': path.resolve(__dirname, './src/services/selectors'),
+      '@constants': path.resolve(__dirname, './src/constants')
     }
   },
   output: {
