@@ -1,19 +1,65 @@
-# Проектная работа 11-го спринта
+# Stellar Burgers
 
-[Макет](<https://www.figma.com/file/vIywAvqfkOIRWGOkfOnReY/React-Fullstack_-Проектные-задачи-(3-месяца)_external_link?type=design&node-id=0-1&mode=design>)
+Приложение для сборки бургера и оформления заказов с авторизацией пользователя, лентой заказов и личной историей заказов.
 
-[Чеклист](https://www.notion.so/praktikum/0527c10b723d4873aa75686bad54b32e?pvs=4)
+## Демо
 
-## Этапы работы:
+Опубликованная версия: [https://thekostvk.github.io/stellar-burgers/](https://thekostvk.github.io/stellar-burgers/)
 
-1. Разверните проект и ознакомьтесь с кодом. Все необходимые вам компоненты уже созданы и лежат в папке `src/components`
+## Технологии
 
-2. Настройте роутинг.
+- React + TypeScript
+- Redux Toolkit (slice + thunk)
+- React Router DOM
+- Webpack
+- CSS Modules + `clsx`
+- GitHub Pages (`gh-pages`)
 
-3. Напишите функционал запросов данных с сервера, используя `Redux` и глобальный `store`. Сами "ручки" уже прописаны и лежат в `utils/burger-api.ts`
+## Возможности
 
-4. Настройте авторизацию и создайте защищённые роуты.
+- Конструктор бургера: выбор булки, добавление ингредиентов, динамическая стоимость
+- Оформление заказа только для авторизованных пользователей
+- Защищённые роуты и возврат на целевой URL после логина
+- Лента всех заказов (`/feed`)
+- История заказов пользователя (`/profile/orders`)
+- Модальные окна через роутинг (`/ingredients/:id`, `/feed/:number`, `/profile/orders/:number`)
 
-## Важно:
+## Установка и запуск
 
-Для корректной работы запросов к серверу необходимо добавить переменную BURGER_API_URL в окружение. Сама ссылка находится в файле `.env.example`.
+Установка зависимостей:
+
+```bash
+npm install
+```
+
+Запуск в режиме разработки:
+
+```bash
+npm start
+```
+
+Сборка для продакшена:
+
+```bash
+npm run build
+```
+
+## Деплой
+
+Деплой на GitHub Pages:
+
+```bash
+npm run deploy
+```
+
+Команда публикует содержимое папки `dist` в ветку `gh-pages`.
+
+## Переменные окружения
+
+Для API нужна переменная окружения:
+
+```env
+BURGER_API_URL=https://norma.education-services.ru/api
+```
+
+Пример есть в файле `.env.example`.
