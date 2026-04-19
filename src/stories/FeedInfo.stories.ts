@@ -17,7 +17,7 @@ type Story = StoryObj<typeof meta>;
 
 export const DefaultFeedInfo: Story = {
   args: {
-    feed: {
+    feeds: {
       orders: [
         {
           _id: '11111',

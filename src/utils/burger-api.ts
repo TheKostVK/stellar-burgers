@@ -15,6 +15,8 @@ type TRefreshResponse = TServerResponse<{
   accessToken: string;
 }>;
 
+let refreshPromise: Promise<TRefreshResponse> | null = null;
+
 export const refreshToken = (): Promise<TRefreshResponse> =>
   fetch(`${URL}/auth/token`, {
     method: 'POST',
@@ -35,6 +37,16 @@ export const refreshToken = (): Promise<TRefreshResponse> =>
       return refreshData;
     });
 
+const getRefreshTokenWithLock = () => {
+  if (!refreshPromise) {
+    refreshPromise = refreshToken().finally(() => {
+      refreshPromise = null;
+    });
+  }
+
+  return refreshPromise;
+};
+
 export const fetchWithRefresh = async <T>(
   url: RequestInfo,
   options: RequestInit
@@ -44,7 +56,7 @@ export const fetchWithRefresh = async <T>(
     return await checkResponse<T>(res);
   } catch (err) {
     if ((err as { message: string }).message === 'jwt expired') {
-      const refreshData = await refreshToken();
+      const refreshData = await getRefreshTokenWithLock();
       if (options.headers) {
         (options.headers as { [key: string]: string }).authorization =
           refreshData.accessToken;
@@ -106,7 +118,7 @@ type TOwner = {
   updatedAt: string;
 };
 
-type TNewOrder = {
+export type TNewOrder = {
   _id: string;
   status: string;
   name: string;
