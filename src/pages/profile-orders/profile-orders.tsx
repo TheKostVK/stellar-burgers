@@ -7,10 +7,7 @@ import {
   getUserOrders,
   getUserOrdersStatus
 } from '../../services/slices/ordersSlice';
-import {
-  getIngredientsStatus,
-  ingredientsInit
-} from '../../services/slices/constructorSlice';
+import { getIngredientsStatus } from '../../services/slices/constructorSlice';
 
 export const ProfileOrders: FC = () => {
   const dispatch = useDispatch();
@@ -20,17 +17,16 @@ export const ProfileOrders: FC = () => {
   const isIngredientsLoading = useSelector(getIngredientsStatus);
 
   useEffect(() => {
-    let request = dispatch(fetchUserOrders());
-    dispatch(ingredientsInit());
+    let request: { abort: () => void } | null = null;
 
     const intervalId = setInterval(() => {
-      request.abort();
+      request?.abort();
       request = dispatch(fetchUserOrders());
     }, 60000);
 
     return () => {
       clearInterval(intervalId);
-      request.abort();
+      request?.abort();
     };
   }, [dispatch]);
 

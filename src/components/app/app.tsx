@@ -1,5 +1,11 @@
 import '../../index.css';
-import { Route, Routes, useLocation, useNavigate } from 'react-router-dom';
+import {
+  matchPath,
+  Route,
+  Routes,
+  useLocation,
+  useNavigate
+} from 'react-router-dom';
 import {
   ConstructorPage,
   Feed,
@@ -18,22 +24,59 @@ import { OrderInfo } from '../order-info';
 import { IngredientDetails } from '../ingredient-details';
 import { AppRoute, AppRoutePattern, AppRouteSegment } from '@constants/routes';
 import { useEffect } from 'react';
-import { useDispatch } from '../../services/store';
-import { forceLogout, initUser } from '../../services/slices/userSlice';
+import { useDispatch, useSelector } from '../../services/store';
+import {
+  forceLogout,
+  getUser,
+  initUser
+} from '../../services/slices/userSlice';
+import { ingredientsInit } from '../../services/slices/constructorSlice';
+import {
+  fetchFeedOrders,
+  fetchUserOrders
+} from '../../services/slices/ordersSlice';
 import { AUTH_LOGOUT_EVENT } from '@api';
 
 const App = () => {
   const dispatch = useDispatch();
+  const user = useSelector(getUser);
   const location = useLocation();
   const navigate = useNavigate();
-  const background = location.state?.background;
+  const initialBackground = location.state?.background;
+  const isIngredientDetailsRoute = Boolean(
+    matchPath(AppRoutePattern.INGREDIENT_DETAILS, location.pathname)
+  );
+  const isFeedOrderRoute = Boolean(
+    matchPath(AppRoutePattern.FEED_ORDER, location.pathname)
+  );
+  const fallbackRoute =
+    isIngredientDetailsRoute || isFeedOrderRoute
+      ? isFeedOrderRoute
+        ? AppRoute.FEED
+        : AppRoute.HOME
+      : AppRoute.HOME;
+  const fallbackBackground =
+    !initialBackground && (isIngredientDetailsRoute || isFeedOrderRoute)
+      ? { ...location, pathname: fallbackRoute }
+      : undefined;
+  const background = initialBackground || fallbackBackground;
 
   const handleCloseModal = () =>
-    background ? navigate(-1) : navigate(AppRoute.HOME, { replace: true });
+    initialBackground
+      ? navigate(-1)
+      : navigate(fallbackRoute, { replace: true });
 
   useEffect(() => {
     dispatch(initUser());
+    dispatch(ingredientsInit());
+    dispatch(fetchFeedOrders());
   }, [dispatch]);
+
+  useEffect(() => {
+    if (user) {
+      dispatch(fetchUserOrders());
+    }
+  }, [dispatch, user]);
 
   useEffect(() => {
     const handleAuthLogout = () => {

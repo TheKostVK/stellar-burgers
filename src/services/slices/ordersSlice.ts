@@ -1,5 +1,11 @@
 import { createAsyncThunk, createSlice } from '@reduxjs/toolkit';
-import { getFeedsApi, getOrdersApi, orderBurgerApi, TNewOrder } from '@api';
+import {
+  getFeedsApi,
+  getOrderByNumberApi,
+  getOrdersApi,
+  orderBurgerApi,
+  TNewOrder
+} from '@api';
 import { TOrder } from '@utils-types';
 import { forceLogout, logoutUser } from './userSlice';
 
@@ -36,6 +42,25 @@ export const fetchUserOrders = createAsyncThunk<
   }
 });
 
+export const fetchOrderByNumber = createAsyncThunk<
+  TOrder,
+  number,
+  { rejectValue: string }
+>('orders/fetchByNumber', async (number, { rejectWithValue }) => {
+  try {
+    const response = await getOrderByNumberApi(number);
+    const order = response.orders[0];
+
+    if (!order) {
+      return rejectWithValue('Заказ не найден');
+    }
+
+    return order;
+  } catch (error) {
+    return rejectWithValue(getErrorMessage(error));
+  }
+});
+
 export const createOrder = createAsyncThunk<
   { order: TNewOrder },
   string[],
@@ -60,6 +85,12 @@ interface OrderSliceState {
     totalToday: number;
   };
   user: OrdersSourceState;
+  orderByNumber: {
+    isLoading: boolean;
+    error: string | null;
+    order: TOrder | null;
+    requestedNumber: number | null;
+  };
   orderRequest: boolean;
   orderModalData: TNewOrder | null;
   createOrderError: string | null;
@@ -77,6 +108,12 @@ const initialState: OrderSliceState = {
     isLoading: false,
     error: null,
     orders: []
+  },
+  orderByNumber: {
+    isLoading: false,
+    error: null,
+    order: null,
+    requestedNumber: null
   },
   orderRequest: false,
   orderModalData: null,
@@ -99,6 +136,11 @@ export const ordersSlice = createSlice({
     getUserOrders: (state) => state.user.orders,
     getUserOrdersStatus: (state) => state.user.isLoading,
     getUserOrdersError: (state) => state.user.error,
+    getOrderByNumber: (state) => state.orderByNumber.order,
+    getOrderByNumberStatus: (state) => state.orderByNumber.isLoading,
+    getOrderByNumberError: (state) => state.orderByNumber.error,
+    getOrderByNumberRequestedNumber: (state) =>
+      state.orderByNumber.requestedNumber,
     getOrderRequest: (state) => state.orderRequest,
     getOrderModalData: (state) => state.orderModalData,
     getCreateOrderError: (state) => state.createOrderError,
@@ -141,6 +183,26 @@ export const ordersSlice = createSlice({
         }
         state.user.error = action.payload || action.error.message || null;
       })
+      .addCase(fetchOrderByNumber.pending, (state, action) => {
+        state.orderByNumber.isLoading = true;
+        state.orderByNumber.error = null;
+        state.orderByNumber.order = null;
+        state.orderByNumber.requestedNumber = action.meta.arg;
+      })
+      .addCase(fetchOrderByNumber.fulfilled, (state, action) => {
+        state.orderByNumber.isLoading = false;
+        state.orderByNumber.order = action.payload;
+        state.orderByNumber.requestedNumber = action.payload.number;
+      })
+      .addCase(fetchOrderByNumber.rejected, (state, action) => {
+        state.orderByNumber.isLoading = false;
+        if (action.meta.aborted) {
+          return;
+        }
+        state.orderByNumber.requestedNumber = action.meta.arg;
+        state.orderByNumber.error =
+          action.payload || action.error.message || null;
+      })
       .addCase(createOrder.pending, (state) => {
         state.orderRequest = true;
         state.createOrderError = null;
@@ -159,6 +221,12 @@ export const ordersSlice = createSlice({
           error: null,
           orders: []
         };
+        state.orderByNumber = {
+          isLoading: false,
+          error: null,
+          order: null,
+          requestedNumber: null
+        };
         state.orderRequest = false;
         state.orderModalData = null;
         state.createOrderError = null;
@@ -169,6 +237,12 @@ export const ordersSlice = createSlice({
           error: null,
           orders: []
         };
+        state.orderByNumber = {
+          isLoading: false,
+          error: null,
+          order: null,
+          requestedNumber: null
+        };
         state.orderRequest = false;
         state.orderModalData = null;
         state.createOrderError = null;
@@ -178,6 +252,12 @@ export const ordersSlice = createSlice({
           isLoading: false,
           error: null,
           orders: []
+        };
+        state.orderByNumber = {
+          isLoading: false,
+          error: null,
+          order: null,
+          requestedNumber: null
         };
         state.orderRequest = false;
         state.orderModalData = null;
@@ -195,6 +275,10 @@ export const {
   getUserOrders,
   getUserOrdersStatus,
   getUserOrdersError,
+  getOrderByNumber,
+  getOrderByNumberStatus,
+  getOrderByNumberError,
+  getOrderByNumberRequestedNumber,
   getOrderRequest,
   getOrderModalData,
   getCreateOrderError,

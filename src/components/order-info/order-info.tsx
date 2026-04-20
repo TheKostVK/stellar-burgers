@@ -3,19 +3,17 @@ import { Preloader, OrderInfoUI } from '@ui';
 import { TIngredient } from '@utils-types';
 import { RootState, useDispatch, useSelector } from '../../services/store';
 import {
-  fetchFeedOrders,
-  fetchUserOrders,
+  fetchOrderByNumber,
   getFeedOrderById,
-  getFeedOrders,
-  getFeedStatus,
-  getUserOrderById,
-  getUserOrders,
-  getUserOrdersStatus
+  getOrderByNumber,
+  getOrderByNumberError,
+  getOrderByNumberRequestedNumber,
+  getOrderByNumberStatus,
+  getUserOrderById
 } from '../../services/slices/ordersSlice';
 import {
   getIngredients,
-  getIngredientsStatus,
-  ingredientsInit
+  getIngredientsStatus
 } from '../../services/slices/constructorSlice';
 import { useLocation, useParams } from 'react-router-dom';
 import { AppRoute } from '@constants/routes';
@@ -29,14 +27,14 @@ export const OrderInfo: FC = () => {
   const dispatch = useDispatch();
 
   const isLoadingIngredients = useSelector(getIngredientsStatus);
-  const isLoadingFeedOrders = useSelector(getFeedStatus);
-  const isLoadingUserOrders = useSelector(getUserOrdersStatus);
+  const isLoadingOrderByNumber = useSelector(getOrderByNumberStatus);
+  const orderByNumberError = useSelector(getOrderByNumberError);
 
-  const feedOrders = useSelector(getFeedOrders);
-  const userOrders = useSelector(getUserOrders);
   const ingredients = useSelector(getIngredients);
+  const orderByNumber = useSelector(getOrderByNumber);
+  const requestedOrderNumber = useSelector(getOrderByNumberRequestedNumber);
 
-  const orderData = useSelector((state: RootState) =>
+  const orderDataFromStore = useSelector((state: RootState) =>
     Number.isFinite(orderNumber)
       ? isProfileOrder
         ? getUserOrderById(state, orderNumber)
@@ -44,30 +42,25 @@ export const OrderInfo: FC = () => {
       : undefined
   );
 
+  const orderData =
+    orderDataFromStore ||
+    (orderByNumber?.number === orderNumber ? orderByNumber : undefined);
+
   useEffect(() => {
-    if (!ingredients.length && !isLoadingIngredients) {
-      dispatch(ingredientsInit());
-    }
-
-    if (isProfileOrder) {
-      if (!userOrders.length && !isLoadingUserOrders) {
-        dispatch(fetchUserOrders());
-      }
-      return;
-    }
-
-    if (!feedOrders.length && !isLoadingFeedOrders) {
-      dispatch(fetchFeedOrders());
+    if (
+      Number.isFinite(orderNumber) &&
+      !orderDataFromStore &&
+      requestedOrderNumber !== orderNumber &&
+      !isLoadingOrderByNumber
+    ) {
+      dispatch(fetchOrderByNumber(orderNumber));
     }
   }, [
     dispatch,
-    feedOrders.length,
-    userOrders.length,
-    ingredients.length,
-    isProfileOrder,
-    isLoadingIngredients,
-    isLoadingFeedOrders,
-    isLoadingUserOrders
+    orderNumber,
+    orderDataFromStore,
+    requestedOrderNumber,
+    isLoadingOrderByNumber
   ]);
 
   /* Готовим данные для отображения */
@@ -112,13 +105,16 @@ export const OrderInfo: FC = () => {
     };
   }, [orderData, ingredients]);
 
-  if (
-    !orderInfo ||
-    isLoadingIngredients ||
-    isLoadingFeedOrders ||
-    isLoadingUserOrders
-  ) {
+  if (isLoadingIngredients || isLoadingOrderByNumber) {
     return <Preloader />;
+  }
+
+  if (!orderInfo) {
+    return (
+      <p className='text text_type_main-medium pt-10'>
+        {orderByNumberError || 'Заказ не найден'}
+      </p>
+    );
   }
 
   return <OrderInfoUI orderInfo={orderInfo} />;

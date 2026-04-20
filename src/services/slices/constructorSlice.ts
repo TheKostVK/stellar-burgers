@@ -44,25 +44,30 @@ export const constructorSlice = createSlice({
   name: 'constructorSlice',
   initialState,
   reducers: {
-    addIngredientToConstructorItems: (state, action) => {
-      if (action.payload.type === 'bun') {
-        const currentBunPrice = state.constructorItems.bun?.price || 0;
+    addIngredientToConstructorItems: {
+      reducer: (state, action: PayloadAction<TConstructorIngredient>) => {
+        if (action.payload.type === 'bun') {
+          const currentBunPrice = state.constructorItems.bun?.price || 0;
 
-        state.constructorItems.price =
-          state.constructorItems.price - currentBunPrice * 2;
+          state.constructorItems.price =
+            state.constructorItems.price - currentBunPrice * 2;
 
-        state.constructorItems.bun = action.payload;
+          state.constructorItems.bun = action.payload;
 
-        state.constructorItems.price =
-          state.constructorItems.price + action.payload.price * 2;
-      } else {
-        state.constructorItems.ingredients.push({
-          ...action.payload,
+          state.constructorItems.price =
+            state.constructorItems.price + action.payload.price * 2;
+        } else {
+          state.constructorItems.ingredients.push(action.payload);
+          state.constructorItems.price =
+            state.constructorItems.price + action.payload.price;
+        }
+      },
+      prepare: (ingredient: TIngredient) => ({
+        payload: {
+          ...ingredient,
           id: nanoid()
-        });
-        state.constructorItems.price =
-          state.constructorItems.price + action.payload.price;
-      }
+        }
+      })
     },
     removeIngredientFromConstructorItems: (state, action) => {
       if (action.payload.type === 'bun') {

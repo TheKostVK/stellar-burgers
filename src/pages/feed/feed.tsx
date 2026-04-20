@@ -7,10 +7,7 @@ import {
   getFeedOrders,
   getFeedStatus
 } from '../../services/slices/ordersSlice';
-import {
-  getIngredientsStatus,
-  ingredientsInit
-} from '../../services/slices/constructorSlice';
+import { getIngredientsStatus } from '../../services/slices/constructorSlice';
 
 export const Feed: FC = () => {
   const isLoading = useSelector(getFeedStatus);
@@ -20,17 +17,16 @@ export const Feed: FC = () => {
   const dispatch = useDispatch();
 
   useEffect(() => {
-    let request = dispatch(fetchFeedOrders());
-    dispatch(ingredientsInit());
+    let request: { abort: () => void } | null = null;
 
     const intervalId = setInterval(() => {
-      request.abort();
+      request?.abort();
       request = dispatch(fetchFeedOrders());
     }, 30000);
 
     return () => {
       clearInterval(intervalId);
-      request.abort();
+      request?.abort();
     };
   }, [dispatch]);
 
