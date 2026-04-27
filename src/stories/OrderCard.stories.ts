@@ -73,6 +73,7 @@ export const DefaultOrderCard: Story = {
       ingredients: ['Булка', 'Начинка']
     },
     maxIngredients: 5,
+    isProfileOrders: false,
     locationState: {
       background: {
         hash: '',

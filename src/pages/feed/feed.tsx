@@ -1,15 +1,42 @@
 import { Preloader } from '@ui';
 import { FeedUI } from '@ui-pages';
-import { TOrder } from '@utils-types';
-import { FC } from 'react';
+import { FC, useEffect } from 'react';
+import { useDispatch, useSelector } from '../../services/store';
+import {
+  fetchFeedOrders,
+  getFeedOrders,
+  getFeedStatus
+} from '../../services/slices/ordersSlice';
+import { getIngredientsStatus } from '../../services/slices/constructorSlice';
 
 export const Feed: FC = () => {
-  /** TODO: взять переменную из стора */
-  const orders: TOrder[] = [];
+  const isLoading = useSelector(getFeedStatus);
+  const isIngredientsLoading = useSelector(getIngredientsStatus);
+  const orders = useSelector(getFeedOrders);
 
-  if (!orders.length) {
+  const dispatch = useDispatch();
+
+  useEffect(() => {
+    let request: { abort: () => void } | null = null;
+
+    const intervalId = setInterval(() => {
+      request?.abort();
+      request = dispatch(fetchFeedOrders());
+    }, 30000);
+
+    return () => {
+      clearInterval(intervalId);
+      request?.abort();
+    };
+  }, [dispatch]);
+
+  const handleFeedsUpdate = () => {
+    dispatch(fetchFeedOrders());
+  };
+
+  if (isLoading || isIngredientsLoading) {
     return <Preloader />;
   }
 
-  <FeedUI orders={orders} handleGetFeeds={() => {}} />;
+  return <FeedUI orders={orders} handleGetFeeds={handleFeedsUpdate} />;
 };

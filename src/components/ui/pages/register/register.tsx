@@ -1,4 +1,4 @@
-import { FC, useState } from 'react';
+import { FC } from 'react';
 import {
   Input,
   Button,
@@ -11,11 +11,17 @@ import { RegisterUIProps } from './type';
 export const RegisterUI: FC<RegisterUIProps> = ({
   errorText,
   email,
+  emailError,
   setEmail,
   handleSubmit,
+  isFormValid = false,
+  isSubmitting,
   password,
+  passwordError,
+  submitLabel,
   setPassword,
   userName,
+  userNameError,
   setUserName
 }) => (
   <main className={styles.container}>
@@ -34,8 +40,8 @@ export const RegisterUI: FC<RegisterUIProps> = ({
               onChange={(e) => setUserName(e.target.value)}
               value={userName}
               name='name'
-              error={false}
-              errorText=''
+              error={Boolean(userNameError)}
+              errorText={userNameError || ''}
               size='default'
             />
           </div>
@@ -46,8 +52,8 @@ export const RegisterUI: FC<RegisterUIProps> = ({
               onChange={(e) => setEmail(e.target.value)}
               value={email}
               name={'email'}
-              error={false}
-              errorText=''
+              error={Boolean(emailError)}
+              errorText={emailError || ''}
               size={'default'}
             />
           </div>
@@ -57,10 +63,20 @@ export const RegisterUI: FC<RegisterUIProps> = ({
               value={password}
               name='password'
             />
+            {passwordError && (
+              <p className='mt-2 text text_type_main-default text_color_error'>
+                {passwordError}
+              </p>
+            )}
           </div>
           <div className={`pb-6 ${styles.button}`}>
-            <Button type='primary' size='medium' htmlType='submit'>
-              Зарегистрироваться
+            <Button
+              type='primary'
+              size='medium'
+              htmlType='submit'
+              disabled={isSubmitting || !isFormValid}
+            >
+              {submitLabel}
             </Button>
           </div>
           {errorText && (

@@ -10,6 +10,7 @@ import { ProfileMenu } from '@components';
 export const ProfileUI: FC<ProfileUIProps> = ({
   formValue,
   isFormChanged,
+  isSubmitting = false,
   updateUserError,
   handleSubmit,
   handleCancel,
@@ -69,12 +70,18 @@ export const ProfileUI: FC<ProfileUIProps> = ({
               type='secondary'
               htmlType='button'
               size='medium'
+              disabled={isSubmitting}
               onClick={handleCancel}
             >
               Отменить
             </Button>
-            <Button type='primary' size='medium' htmlType='submit'>
-              Сохранить
+            <Button
+              type='primary'
+              size='medium'
+              htmlType='submit'
+              disabled={isSubmitting}
+            >
+              {isSubmitting ? 'Сохраняем...' : 'Сохранить'}
             </Button>
           </div>
         )}

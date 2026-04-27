@@ -1,9 +1,5 @@
-import { FC, useState } from 'react';
-import {
-  Input,
-  Button,
-  PasswordInput
-} from '@zlden/react-developer-burger-ui-components';
+import { FC } from 'react';
+import { Input, Button } from '@zlden/react-developer-burger-ui-components';
 import styles from '../common.module.css';
 import { Link } from 'react-router-dom';
 import { LoginUIProps } from './type';
@@ -12,9 +8,14 @@ export const LoginUI: FC<LoginUIProps> = ({
   email,
   setEmail,
   errorText,
+  emailError,
   handleSubmit,
+  isFormValid = false,
+  isSubmitting,
   password,
-  setPassword
+  passwordError,
+  setPassword,
+  submitLabel
 }) => (
   <main className={styles.container}>
     <div className={`pt-6 ${styles.wrapCenter}`}>
@@ -32,21 +33,31 @@ export const LoginUI: FC<LoginUIProps> = ({
               onChange={(e) => setEmail(e.target.value)}
               value={email}
               name='email'
-              error={false}
-              errorText=''
+              error={Boolean(emailError)}
+              errorText={emailError || ''}
               size='default'
             />
           </div>
           <div className='pb-6'>
-            <PasswordInput
+            <Input
+              type='password'
+              placeholder='Пароль'
               onChange={(e) => setPassword(e.target.value)}
               value={password}
               name='password'
+              error={Boolean(passwordError)}
+              errorText={passwordError || ''}
+              size='default'
             />
           </div>
           <div className={`pb-6 ${styles.button}`}>
-            <Button type='primary' size='medium' htmlType='submit'>
-              Войти
+            <Button
+              type='primary'
+              size='medium'
+              htmlType='submit'
+              disabled={isSubmitting || !isFormValid}
+            >
+              {submitLabel}
             </Button>
           </div>
           {errorText && (

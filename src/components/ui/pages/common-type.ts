@@ -5,4 +5,8 @@ export type PageUIProps = {
   email: string;
   setEmail: Dispatch<SetStateAction<string>>;
   handleSubmit: (e: SyntheticEvent) => void;
+  isSubmitting: boolean;
+  submitLabel: string;
+  emailError?: string;
+  isFormValid?: boolean;
 };
