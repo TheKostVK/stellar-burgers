@@ -98,7 +98,9 @@
     "predeploy": "npm run build",
     "deploy": "gh-pages -d dist",
     "test": "jest",
-    "test:coverage": "jest --coverage"
+    "test:coverage": "jest --coverage",
+    "cypress:open": "cypress open",
+    "cypress:run": "cypress run"
   },
   "eslintConfig": {
     "extends": [
