@@ -1,0 +1,19 @@
+{
+  "success": true,
+  "name": "Флюоресцентный бургер",
+  "order": {
+    "_id": "order-test-id",
+    "status": "done",
+    "name": "Флюоресцентный бургер",
+    "owner": {
+      "name": "Тестовый пользователь",
+      "email": "test@example.com",
+      "createdAt": "2026-05-06T09:00:00.000Z",
+      "updatedAt": "2026-05-06T09:00:00.000Z"
+    },
+    "createdAt": "2026-05-06T09:00:00.000Z",
+    "updatedAt": "2026-05-06T09:00:00.000Z",
+    "number": 77777,
+    "price": 2400
+  }
+}
