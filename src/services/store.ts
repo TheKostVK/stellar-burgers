@@ -9,7 +9,11 @@ import { userSlice } from './slices/userSlice';
 import { constructorSlice } from './slices/constructorSlice';
 import { ordersSlice } from './slices/ordersSlice';
 
-const rootReducer = combineSlices(userSlice, constructorSlice, ordersSlice);
+export const rootReducer = combineSlices(
+  userSlice,
+  constructorSlice,
+  ordersSlice
+);
 
 const store = configureStore({
   reducer: rootReducer,

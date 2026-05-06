@@ -145,8 +145,10 @@ export const constructorSlice = createSlice({
           (ingredient) => ingredient.type === 'sauce'
         );
       })
-      .addCase(ingredientsInit.rejected, (state) => {
+      .addCase(ingredientsInit.rejected, (state, action) => {
         state.isLoading = false;
+        state.error =
+          action.error.message || 'Не удалось загрузить ингредиенты';
       })
       .addCase(logoutUser.fulfilled, (state) => {
         state.error = null;
